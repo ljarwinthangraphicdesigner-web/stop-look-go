@@ -1,55 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ရပ်၊ကြည့်၊သွား - Road Crossing Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ရပ်၊ကြည့်၊သွား - Mobile Edition</title>
     <style>
-        /* မြန်မာစာလုံး ပိုလှအောင် Font ထည့်မယ် */
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap');
-
-        body { 
-            text-align: center; 
-            background-color: #1a1a1a; 
-            color: white; 
-            font-family: 'Pyidaungsu', 'Arial', sans-serif; 
-        }
+        body { text-align: center; background-color: #1a1a1a; color: white; font-family: 'Pyidaungsu', sans-serif; margin: 0; touch-action: manipulation; overflow: hidden; }
+        
+        /* Game Canvas ကို ဖုန်းနဲ့ အံကိုက်ဖြစ်အောင် ညှိမယ် */
         #gameCanvas { 
-            background-color: #333; 
-            border: 5px solid #444; 
-            display: none; 
-            margin: 10px auto; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+            background-color: #333; border: 3px solid #444; 
+            max-width: 95%; height: auto; display: none; margin: 5px auto; 
         }
-        .stats { font-size: 24px; margin-bottom: 10px; color: #f1c40f; font-weight: bold; }
-        .btn { 
-            padding: 15px 35px; 
-            font-size: 22px; 
-            cursor: pointer; 
-            background: #27ae60; 
-            color: white; 
-            border: none; 
-            border-radius: 10px;
-            font-family: 'Pyidaungsu', sans-serif;
-            font-weight: bold;
+
+        .stats { font-size: 18px; margin: 10px 0; color: #f1c40f; }
+
+        /* ဖုန်းမှာပေါ်မယ့် ခလုတ်များ */
+        .controls { 
+            display: grid; grid-template-columns: repeat(3, 60px); 
+            grid-gap: 10px; justify-content: center; margin-top: 15px; 
         }
-        h1 { font-size: 40px; color: #e74c3c; text-shadow: 2px 2px 4px #000; }
+        .ctrl-btn { 
+            width: 60px; height: 60px; background: rgba(255,255,255,0.2); 
+            border: 2px solid white; border-radius: 50%; color: white; 
+            font-size: 24px; display: flex; align-items: center; justify-content: center;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.5); }
+        .up { grid-column: 2; }
+        .left { grid-column: 1; }
+        .down { grid-column: 2; }
+        .right { grid-column: 3; }
+
+        .btn { padding: 12px 30px; font-size: 20px; cursor: pointer; background: #27ae60; color: white; border: none; border-radius: 10px; font-family: 'Pyidaungsu'; }
     </style>
 </head>
 <body>
 
-    <div id="startScreen">
+    <div id="startScreen" style="padding-top: 50px;">
         <h1>🛑 ရပ်၊ကြည့်၊သွား 🚶‍♂️</h1>
-        <p>ကားတွေကို ရှောင်ပြီး လမ်းကို ဘေးကင်းအောင် ကူးပါ။</p>
         <button class="btn" onclick="startGame()">ဂိမ်းစဆော့မယ်</button>
     </div>
 
     <div id="gameUI" style="display:none;">
         <div class="stats">မှတ်စု: <span id="scoreVal">0</span> | အဆင့်: <span id="levelVal">1</span></div>
         <canvas id="gameCanvas" width="600" height="400"></canvas>
+        
+        <div class="controls">
+            <div class="ctrl-btn up" ontouchstart="move('up')" onmousedown="move('up')">▲</div>
+            <div class="ctrl-btn left" ontouchstart="move('left')" onmousedown="move('left')">◀</div>
+            <div class="ctrl-btn down" ontouchstart="move('down')" onmousedown="move('down')">▼</div>
+            <div class="ctrl-btn right" ontouchstart="move('right')" onmousedown="move('right')">▶</div>
+        </div>
     </div>
 
     <script>
-        // အပေါ်က JavaScript Code တွေကတော့ အရင်အတိုင်းပဲ ဆက်သုံးလို့ရပါတယ်...
-        // ... (ပုံတွေ၊ အသံတွေနဲ့ Game Logic တွေ အားလုံး အတူတူပါပဲ)
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -62,8 +67,7 @@
         const crashSound = new Audio('crash.mp3');
         const winSound = new Audio('win.mp3');
 
-        let score = 0;
-        let level = 1;
+        let score = 0; let level = 1;
         let player = { x: 20, y: 180, width: 40, height: 40 };
         let cars = [
             { x: 150, y: 0, w: 45, h: 70, speed: 3, type: 1 },
@@ -79,27 +83,30 @@
             gameLoop();
         }
 
+        // ဖုန်းမှာ နှိပ်လို့ရအောင် လုပ်တဲ့ Function
+        function move(dir) {
+            moveSound.currentTime = 0;
+            moveSound.play().catch(e => {});
+            if (dir === "up") player.y -= 25;
+            if (dir === "down") player.y += 25;
+            if (dir === "left") player.x -= 25;
+            if (dir === "right") player.x += 25;
+        }
+
+        // Keyboard အတွက်လည်း ဆက်သုံးလို့ရအောင် ထားမယ်
         window.addEventListener("keydown", (e) => {
-            if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) {
-                moveSound.currentTime = 0;
-                moveSound.play().catch(e => {});
-                if (e.key === "ArrowRight") player.x += 20;
-                if (e.key === "ArrowLeft") player.x -= 20;
-                if (e.key === "ArrowUp") player.y -= 20;
-                if (e.key === "ArrowDown") player.y += 20;
-            }
+            if (e.key === "ArrowUp") move("up");
+            if (e.key === "ArrowDown") move("down");
+            if (e.key === "ArrowLeft") move("left");
+            if (e.key === "ArrowRight") move("right");
         });
 
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // လမ်းကြောင်းမျဉ်းများ
-            ctx.strokeStyle = "#555";
-            ctx.setLineDash([15, 15]);
+            ctx.strokeStyle = "#555"; ctx.setLineDash([15, 15]);
             for(let i = 110; i < 500; i += 100) {
                 ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 400); ctx.stroke();
             }
-
             ctx.drawImage(goalImg, 550, 180, 40, 40);
             ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
 
@@ -122,23 +129,16 @@
                 if (player.x < car.x + car.w && player.x + player.width > car.x &&
                     player.y < car.y + car.h && player.y + player.height > car.y) {
                     crashSound.play().catch(e => {});
-                    alert("ကားတိုက်သွားပြီ! ဂရုစိုက်ပါဦး။");
-                    score = 0;
-                    level = 1;
-                    updateUI();
-                    resetPlayer();
+                    alert("ကားတိုက်သွားပြီ!");
+                    score = 0; level = 1; updateUI(); resetPlayer();
                 }
             });
 
             if (player.x >= 550) {
                 winSound.play().catch(e => {});
                 score += 10;
-                if (score % 50 === 0) {
-                    level += 1;
-                    cars.forEach(c => c.speed *= 1.2);
-                }
-                updateUI();
-                resetPlayer();
+                if (score % 50 === 0) { level += 1; cars.forEach(c => c.speed *= 1.2); }
+                updateUI(); resetPlayer();
             }
             requestAnimationFrame(gameLoop);
         }
